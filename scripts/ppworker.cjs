@@ -310,7 +310,7 @@ const main = async () => {
     } = ppconfig.android
 
     const outPath = path.resolve(output)
-    generateAdaptiveIcons(input, outPath)
+    //generateAdaptiveIcons(input, outPath)
 
     const dest = path.resolve(copyTo)
     await fs.copy(outPath, dest, { overwrite: true })

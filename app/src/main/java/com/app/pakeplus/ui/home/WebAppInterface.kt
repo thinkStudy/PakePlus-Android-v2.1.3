@@ -25,7 +25,7 @@ class WebAppInterface(private val activity: Activity) {
             // WindowCompat.setStatusBarColor(activity.window, color)
 
             // 根据颜色亮度，自动调整状态栏图标（黑白）
-            setStatusBarLightIcon(Color.luminance(color) > 0.5)
+            //setStatusBarLightIcon(Color.luminance(color) > 0.5)
         }
     }
 
@@ -35,13 +35,14 @@ class WebAppInterface(private val activity: Activity) {
             val window = activity.window
             var flags = window.decorView.systemUiVisibility
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                flags = if (isLight) {
+                if (isLight) {
                     // 浅色背景 -> 使用深色图标（黑色）
-                    flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                    flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
                 } else {
                     // 深色背景 -> 使用浅色图标（白色）
-                    flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
+                    flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
                 }
+
                 window.decorView.systemUiVisibility = flags
             }
         }
