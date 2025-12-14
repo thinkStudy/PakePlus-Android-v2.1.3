@@ -27,6 +27,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GestureDetectorCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.app.pakeplus.ui.home.WebAppInterface
 
 class MainActivity : AppCompatActivity() {
 
@@ -66,6 +67,10 @@ class MainActivity : AppCompatActivity() {
 
         // clear cache
         webView.clearCache(true)
+
+        // 2. 注入 JavaScript 桥接对象，并命名为 "AndroidBridge"
+        // 注意：第三个参数是 JS 中访问对象的名称
+        webView.addJavascriptInterface(WebAppInterface(this), "AndroidBridge")
 
         // inject js
         webView.webViewClient = MyWebViewClient()
