@@ -206,10 +206,53 @@ class MainActivity : AppCompatActivity() {
     }
 
     inner class MyChromeClient : WebChromeClient() {
+       
         override fun onProgressChanged(view: WebView?, newProgress: Int) {
             super.onProgressChanged(view, newProgress)
             val url = view?.url
             println("wev view url:$url")
+        }
+        override fun onPermissionRequest(request: PermissionRequest?) {
+            request ?: return // 如果 request 为空，则直接返回
+
+            // 1. 获取请求的权限和来源（可用于日志或逻辑判断）
+            val requestedResources = request.resources // 例如: [RESOURCE_VIDEO_CAPTURE, RESOURCE_AUDIO_CAPTURE]
+            val origin = request.origin.toString()
+
+            // 2. 【策略1】简单策略：直接授予所有请求的权限
+            // request.grant(request.resources)
+
+            // 3. 【策略2】选择性授权：检查并只授予你同意的权限
+            val grantedResources = mutableListOf<String>()
+            for (resource in requestedResources) {
+                when (resource) {
+                    PermissionRequest.RESOURCE_VIDEO_CAPTURE -> {
+                        // 可以在这里加入额外的条件，例如检查是否已获得Android系统摄像头权限
+                        grantedResources.add(resource)
+                    }
+                    PermissionRequest.RESOURCE_AUDIO_CAPTURE -> {
+                        // 检查Android系统麦克风权限等
+                        grantedResources.add(resource)
+                    }
+                    PermissionRequest.RESOURCE_MIDI_SYSEX -> {
+                        // 例如，我们可能不想授予MIDI系统独占权限
+                        // 选择不添加到 grantedResources 列表中
+                        println("拒绝授予权限: $resource")
+                    }
+                    // ... 可以处理其他资源类型
+                }
+            }
+
+            // 4. 根据筛选结果进行授权或拒绝
+            if (grantedResources.isNotEmpty()) {
+                // 授予同意的权限列表
+                request.grant(grantedResources.toTypedArray())
+            } else {
+                // 如果没有一个权限被同意，则整体拒绝
+                request.deny()
+            }
+
+            // 注意：如果既不调用 grant() 也不调用 deny()，请求将一直被挂起。
         }
     }
 }
