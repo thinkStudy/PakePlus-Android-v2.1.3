@@ -37,12 +37,11 @@ class WebAppInterface(private val activity: Activity) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if (isLight) {
                     // 浅色背景 -> 使用深色图标（黑色）
-                    flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                   flags = flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
                 } else {
                     // 深色背景 -> 使用浅色图标（白色）
-                    flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
+                   flags = flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
                 }
-
                 window.decorView.systemUiVisibility = flags
             }
         }
