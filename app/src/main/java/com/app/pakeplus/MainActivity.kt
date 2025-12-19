@@ -2,7 +2,7 @@ package com.app.pakeplus
 
 import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
-import android.content.Intent
+
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle

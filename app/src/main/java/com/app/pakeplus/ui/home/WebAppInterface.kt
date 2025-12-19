@@ -2,7 +2,6 @@ package com.app.pakeplus.ui.home
 
 import android.app.Activity
 import android.graphics.Color
-import android.os.Build
 import android.view.View
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
