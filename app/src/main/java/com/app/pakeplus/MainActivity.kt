@@ -27,6 +27,8 @@ import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import android.widget.Toast
+import android.content.Context
+import android.content.Intent
 
 class MainActivity : AppCompatActivity() {
 
@@ -162,6 +164,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun startFileChooser(): Boolean {
         val intent = mFileChooserParams?.createIntent()
+        if (intent == null) {
+            mUploadCallback?.onReceiveValue(null)
+            mUploadCallback = null
+            mFileChooserParams = null
+            Toast.makeText(this, "无法创建文件选择器", Toast.LENGTH_SHORT).show()
+            return false
+        }
+        
         try {
             startActivityForResult(intent, FILE_CHOOSER_REQUEST_CODE)
             return true

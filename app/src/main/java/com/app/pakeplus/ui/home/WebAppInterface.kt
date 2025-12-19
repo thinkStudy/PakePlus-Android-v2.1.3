@@ -18,8 +18,87 @@ import org.json.JSONObject
 import android.Manifest
 import android.content.pm.PackageManager
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import android.util.Log
+
 class WebAppInterface(private val activity: Activity, private val webView: WebView) 
  {
+    companion object {
+        private const val TAG = "WebAppInterface"
+        private const val PERMISSION_REQUEST_RECORD_AUDIO = 1003
+        private const val PERMISSION_REQUEST_CAMERA = 1004
+        private const val PERMISSION_REQUEST_STORAGE = 1005
+    }
+
+    @JavascriptInterface
+    fun showToast(message: String) {
+        Toast.makeText(activity, message, Toast.LENGTH_SHORT).show()
+    }
+
+    @JavascriptInterface
+    fun openInBrowser(url: String) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        if (intent.resolveActivity(activity.packageManager) != null) {
+            activity.startActivity(intent)
+        }
+    }
+
+    @JavascriptInterface
+    fun requestAudioPermission(): Boolean {
+        return checkAndRequestPermission(
+            Manifest.permission.RECORD_AUDIO,
+            "需要麦克风权限",
+            PERMISSION_REQUEST_RECORD_AUDIO
+        )
+    }
+
+    @JavascriptInterface
+    fun requestCameraPermission(): Boolean {
+        return checkAndRequestPermission(
+            Manifest.permission.CAMERA,
+            "需要相机权限",
+            PERMISSION_REQUEST_CAMERA
+        )
+    }
+
+    @JavascriptInterface
+    fun requestStoragePermission(): Boolean {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                // Android 14+ 使用更细粒度的权限
+                Manifest.permission.READ_MEDIA_IMAGES
+            } else {
+                // Android 13
+                Manifest.permission.READ_MEDIA_IMAGES
+            }
+        } else {
+            // Android 12及以下
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+        
+        return checkAndRequestPermission(
+            permission,
+            "需要文件访问权限",
+            PERMISSION_REQUEST_STORAGE
+        )
+    }
+
+    @JavascriptInterface
+    fun hasPermission(permission: String): Boolean {
+        return ContextCompat.checkSelfPermission(activity, permission) == 
+               PackageManager.PERMISSION_GRANTED
+    }
+
+    @JavascriptInterface
+    fun openAppSettings() {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+        intent.data = Uri.parse("package:${activity.packageName}")
+        activity.startActivity(intent)
+    }
 
     // 关键注解：@JavascriptInterface 暴露方法给 JS
     @JavascriptInterface
@@ -59,121 +138,45 @@ class WebAppInterface(private val activity: Activity, private val webView: WebVi
     }
      private val mainHandler = Handler(Looper.getMainLooper())
 
-        /**
-         * 通用权限检查方法
-         */
-        @JavascriptInterface
-        fun checkPermission(permissionType: String): String {
-            return try {
-                val permission = when (permissionType) {
-                    "microphone" -> Manifest.permission.RECORD_AUDIO
-                    "camera" -> Manifest.permission.CAMERA
-                    "storage" -> Manifest.permission.READ_EXTERNAL_STORAGE
-                    "folder" -> READ_MEDIA_VISUAL_USER_SELECTED
-                    else -> return createResponse(false, "未知权限类型")
-                }
-
-                val granted = ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
-                createResponse(granted, if (granted) "权限已授予" else "权限未授予")
-            } catch (e: Exception) {
-                createResponse(false, "检查权限时出错: ${e.message}")
-            }
-        }
-
-        /**
-         * 请求录音权限（示例）
-         * 网页调用：window.AndroidBridge.requestRecordPermission(callback)
-         */
-        @JavascriptInterface
-        fun requestRecordPermission(callbackFunc: String) {
-            requestPermission(
-                Manifest.permission.RECORD_AUDIO,
-                PERMISSION_REQUEST_RECORD_AUDIO,
-                callbackFunc,
-                "录音"
-            )
-        }
-
-        /**
-         * 请求相机权限（示例）
-         */
-        @JavascriptInterface
-        fun requestCameraPermission(callbackFunc: String) {
-            requestPermission(
-                Manifest.permission.CAMERA,
-                PERMISSION_REQUEST_CAMERA,
-                callbackFunc,
-                "相机"
-            )
-        }
-        /**
-         * 请求文件夹权限（示例）
-         */
-        @JavascriptInterface
-        fun requestFolderPermission(callbackFunc: String) {
-            requestPermission(
-                Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
-                PERMISSION_REQUEST_READ_MEDIA_VISUAL_USER_SELECTED,
-                callbackFunc,
-                "文件夹"
-            )
-        }
-
-        /**
-         * 通用的权限请求方法（内部）
-         */
-        private fun requestPermission(permission: String, requestCode: Int, callbackFunc: String, permissionName: String) {
-            mainHandler.post {
-                if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
-                    // 已有权限，直接回调成功
-                    callJsCallback(callbackFunc, true, "$permissionName 权限已存在")
-                } else {
-                    // 没有权限，需要申请。这里简化处理，实际应保存callback并关联requestCode
-                    val shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(context as androidx.appcompat.app.AppCompatActivity, permission)
-                    if (shouldShowRationale) {
-                        // 可以解释为什么需要权限，然后申请
-                        callJsCallback(callbackFunc, false, "需要$permissionName权限来完成操作，请授权")
-                    }
-                    // 发起系统权限申请
-                    ActivityCompat.requestPermissions(
-                        context as androidx.appcompat.app.AppCompatActivity,
-                        arrayOf(permission),
-                        requestCode
-                    )
-                    // 注意：真实的授权结果需要在 onRequestPermissionsResult 中捕获，
-                    // 并通过某种方式（如广播、接口回调）关联并执行 callbackFunc。
-                    // 此处为简化示例，实际需要更复杂的状态管理。
-                }
-            }
-        }
-
        
-
-        /**
-         * 创建一个标准的 JSON 响应
-         */
-        private fun createResponse(success: Boolean, message: String): String {
-            return JSONObject().apply {
-                put("success", success)
-                put("message", message)
-                // 可以添加更多字段，如 data, code 等
-            }.toString()
-        }
-
-        /**
-         * 在 WebView 主线程中调用 JavaScript 回调函数
-         */
-        private fun callJsCallback(callbackFunc: String, success: Boolean, message: String) {
-            mainHandler.post {
-                // 确保回调函数名是安全的
-                val safeCallbackFunc = callbackFunc.replace(Regex("[^a-zA-Z0-9_\$]"), "")
-                if (safeCallbackFunc.isNotEmpty()) {
-                    val jsonResponse = createResponse(success, message)
-                    // 注意：JSON字符串需要转义后嵌入JS代码
-                    val escapedJson = jsonResponse.replace("'", "\\'").replace("\n", "\\n")
-                    val jsCode = "if (window.$safeCallbackFunc) { window.$safeCallbackFunc('$escapedJson'); }"
-                    webView.evaluateJavascript(jsCode, null)
-                }
+ private fun checkAndRequestPermission(
+        permission: String, 
+        rationale: String,
+        requestCode: Int
+    ): Boolean {
+        return if (ContextCompat.checkSelfPermission(activity, permission) == 
+                  PackageManager.PERMISSION_GRANTED) {
+            true
+        } else {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)) {
+                Toast.makeText(activity, rationale, Toast.LENGTH_LONG).show()
             }
+            ActivityCompat.requestPermissions(
+                activity,
+                arrayOf(permission),
+                requestCode
+            )
+            false
         }
+    }
+
+    @JavascriptInterface
+    fun getDeviceInfo(): String {
+        return """
+            {
+                "platform": "Android",
+                "sdkVersion": ${Build.VERSION.SDK_INT},
+                "manufacturer": "${Build.MANUFACTURER}",
+                "model": "${Build.MODEL}",
+                "product": "${Build.PRODUCT}"
+            }
+        """.trimIndent()
+    }
+
+    @JavascriptInterface
+    fun callJavaScriptFunction(jsFunction: String) {
+        activity.runOnUiThread {
+            webView.evaluateJavascript(jsFunction, null)
+        }
+    }
 }
