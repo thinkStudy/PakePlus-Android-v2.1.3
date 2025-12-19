@@ -29,6 +29,11 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.app.pakeplus.ui.home.WebAppInterface
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+
 class MainActivity : AppCompatActivity() {
 
 //    private lateinit var appBarConfiguration: AppBarConfiguration
@@ -36,6 +41,57 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
     private lateinit var gestureDetector: GestureDetectorCompat
+
+        // 定义一个权限请求码
+    private companion object {
+        private const val PERMISSION_REQUEST_CODE = 1001
+        private val REQUIRED_PERMISSIONS = arrayOf(
+            // 根据你的目标版本选择：
+            Manifest.permission.READ_EXTERNAL_STORAGE, // API < 33
+            // 或
+            Manifest.permission.READ_MEDIA_IMAGES // API >= 33
+        )
+    }
+     private fun checkAndRequestPermissions(): Boolean {
+        // 检查权限是否已授予
+        val permissionsToRequest = REQUIRED_PERMISSIONS.filter { permission ->
+            ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED
+        }
+
+        return if (permissionsToRequest.isNotEmpty()) {
+            // 申请尚未授予的权限
+            ActivityCompat.requestPermissions(
+                this,
+                permissionsToRequest.toTypedArray(),
+                PERMISSION_REQUEST_CODE
+            )
+            false // 权限尚未获得
+        } else {
+            true // 所有权限已授予
+        }
+    }
+    // 处理权限申请结果
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            val allGranted = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+            if (allGranted) {
+                // 权限全部授予，可以重新初始化WebView或通知用户
+                //Toast.makeText(this, "文件访问权限已开启", Toast.LENGTH_SHORT).show()
+            } else {
+                // 有权限被拒绝，可以解释为什么需要此权限
+                Toast.makeText(
+                    this,
+                    "文件访问权限被拒绝，可能无法使用上传功能",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
 
     @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,7 +126,7 @@ class MainActivity : AppCompatActivity() {
 
         // 2. 注入 JavaScript 桥接对象，并命名为 "AndroidBridge"
         // 注意：第三个参数是 JS 中访问对象的名称
-        webView.addJavascriptInterface(WebAppInterface(this), "AndroidBridge")
+        webView.addJavascriptInterface(WebAppInterface(this，webView), "AndroidBridge")
 
         // inject js
         webView.webViewClient = MyWebViewClient()
@@ -158,22 +214,14 @@ class MainActivity : AppCompatActivity() {
             super.onBackPressed()
         }
     }
+    private var mUploadCallback: ValueCallback<Array<Uri>>? = null
+    private val FILE_CHOOSER_REQUEST_CODE = 1002
 
-//    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-//        // Inflate the menu; this adds items to the action bar if it is present.
-//        menuInflater.inflate(R.menu.main, menu)
-//        return true
-//    }
-
-//    override fun onSupportNavigateUp(): Boolean {
-//        val navController = findNavController(R.id.nav_host_fragment_content_main)
-//        return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
-//    }
 
     inner class MyWebViewClient : WebViewClient() {
 
         // vConsole debug
-        private var debug = false
+        private var debug = true
 
         @Deprecated("Deprecated in Java", ReplaceWith("false"))
         override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
@@ -218,6 +266,36 @@ class MainActivity : AppCompatActivity() {
             val url = view?.url
             println("wev view url:$url")
         }
+        // 处理文件选择 (Android 5.0+)
+        override fun onShowFileChooser(
+            webView: WebView?,
+            filePathCallback: ValueCallback<Array<Uri>>?,
+            fileChooserParams: FileChooserParams?
+        ): Boolean {
+            // 1. 保存回调，在onActivityResult中使用
+            mUploadCallback?.onReceiveValue(null) // 取消任何未完成的请求
+            mUploadCallback = filePathCallback
+
+            // 2. 检查权限
+            if (!checkAndRequestPermissions()) {
+                // 如果权限未授予，等待权限申请结果
+                // 这里可以存储回调，在权限授予后再启动选择器
+                Toast.makeText(this@MainActivity, "请先授予文件访问权限", Toast.LENGTH_SHORT).show()
+                // 注意：这里需要更复杂的逻辑来延迟启动选择器，简单起见可以先返回false
+                return false
+            }
+
+            // 3. 权限已授予，创建并启动文件选择Intent
+            val intent = fileChooserParams?.createIntent()
+            try {
+                startActivityForResult(intent, FILE_CHOOSER_REQUEST_CODE)
+            } catch (e: ActivityNotFoundException) {
+                mUploadCallback = null
+                Toast.makeText(this@MainActivity, "未找到文件管理器", Toast.LENGTH_SHORT).show()
+                return false
+            }
+            return true
+        }
         override fun onPermissionRequest(request: PermissionRequest?) {
             request ?: return // 如果 request 为空，则直接返回
 
@@ -259,6 +337,35 @@ class MainActivity : AppCompatActivity() {
             }
 
             // 注意：如果既不调用 grant() 也不调用 deny()，请求将一直被挂起。
+        }
+        // 接收文件选择结果
+        override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+            super.onActivityResult(requestCode, resultCode, data)
+
+            if (requestCode == FILE_CHOOSER_REQUEST_CODE && mUploadCallback != null) {
+                var results: Array<Uri>? = null
+
+                if (resultCode == RESULT_OK && data != null) {
+                    // 处理单选或多选文件
+                    if (data.data != null) {
+                        // 单选文件
+                        results = arrayOf(data.data!!)
+                    } else if (data.clipData != null) {
+                        // 多选文件
+                        val clipData = data.clipData!!
+                        val uris = ArrayList<Uri>(clipData.itemCount)
+                        for (i in 0 until clipData.itemCount) {
+                            val item = clipData.getItemAt(i)
+                            item.uri?.let { uris.add(it) }
+                        }
+                        results = uris.toTypedArray()
+                    }
+                }
+
+                // 必须调用此回调通知WebView结果
+                mUploadCallback?.onReceiveValue(results)
+                mUploadCallback = null // 清空回调
+            }
         }
     }
 }
