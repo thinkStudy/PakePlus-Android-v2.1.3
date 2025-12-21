@@ -127,26 +127,27 @@ class WebAppInterface(private val activity: Activity, private val webView: WebVi
         activity.runOnUiThread {
             val window = activity.window
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                
                 val controller = window.decorView.windowInsetsController
                 if (isLight) {
                     controller?.setSystemBarsAppearance(
-                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
-                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                        controller.APPEARANCE_LIGHT_STATUS_BARS,
+                        controller.APPEARANCE_LIGHT_STATUS_BARS
                     )
                 } else {
                     controller?.setSystemBarsAppearance(
                         0,
-                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                        controller.APPEARANCE_LIGHT_STATUS_BARS
                     )
                 }
             } else {
-                var flags = window.decorView.systemUiVisibility
-                flags = if (isLight) {
-                    flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                if (isLight) {
+                   activity.window.decorView.systemUiVisibility = 0
                 } else {
-                    flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
+                     activity.window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                    
                 }
-                window.decorView.systemUiVisibility = flags
+                
             }
             
         }
