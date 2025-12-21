@@ -126,30 +126,21 @@ class WebAppInterface(private val activity: Activity, private val webView: WebVi
     fun setStatusBarLightIcon(isLight: Boolean) {
         activity.runOnUiThread {
             val window = activity.window
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                
-                val controller = window.decorView.windowInsetsController
-                if (isLight) {
-                    controller?.setSystemBarsAppearance(
-                        controller.APPEARANCE_LIGHT_STATUS_BARS,
-                        controller.APPEARANCE_LIGHT_STATUS_BARS
-                    )
-                } else {
-                    controller?.setSystemBarsAppearance(
-                        0,
-                        controller.APPEARANCE_LIGHT_STATUS_BARS
-                    )
-                }
+        val decorView = window.decorView
+        
+            // 使用 WindowInsetsControllerCompat 兼容所有版本
+            val controller = WindowCompat.getInsetsController(window, decorView)
+            
+            if (isLight) {
+                // 深色状态栏（白色图标）
+                controller.isAppearanceLightStatusBars = false
+                controller.isAppearanceLightNavigationBars = false
             } else {
-                if (isLight) {
-                   activity.window.decorView.systemUiVisibility = 0
-                } else {
-                     activity.window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-                    
-                }
+                // 浅色状态栏（黑色图标）
+                controller.isAppearanceLightStatusBars = true
+                controller.isAppearanceLightNavigationBars = true
                 
             }
-            
         }
     }
      private val mainHandler = Handler(Looper.getMainLooper())
