@@ -6,6 +6,8 @@ import android.view.View
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 
 import android.os.Handler
 import android.os.Looper
@@ -13,6 +15,8 @@ import android.webkit.WebView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+
+
 import org.json.JSONObject
 import android.Manifest
 import android.content.pm.PackageManager
