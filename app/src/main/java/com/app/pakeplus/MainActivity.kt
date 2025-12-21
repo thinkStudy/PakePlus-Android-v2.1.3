@@ -161,7 +161,8 @@ class MainActivity : AppCompatActivity() {
 
         webView.loadUrl("https://juejin.cn/")
     }
-
+// 1. 在类级别定义 ActivityResultLauncher
+private lateinit var someActivityLauncher: ActivityResultLauncher<Intent>
     private fun startFileChooser(): Boolean {
         val intent = mFileChooserParams?.createIntent()
         if (intent == null) {
@@ -173,7 +174,31 @@ class MainActivity : AppCompatActivity() {
         }
         
         try {
-            startActivityForResult(intent, FILE_CHOOSER_REQUEST_CODE)
+             someActivityLauncher = registerForActivityResult(
+                ActivityResultContracts.StartActivityForResult()
+            ) { result ->
+                if (result.resultCode == RESULT_OK) {
+                     var results: Array<Uri>? = null
+                    val data: Intent? = result.data
+                     if (data.data != null) {
+                        results = arrayOf(data.data!!)
+                    } else if (data.clipData != null) {
+                        val clipData = data.clipData!!
+                        val uris = ArrayList<Uri>(clipData.itemCount)
+                        for (i in 0 until clipData.itemCount) {
+                            val item = clipData.getItemAt(i)
+                            item.uri?.let { uris.add(it) }
+                        }
+                        results = uris.toTypedArray()
+                    }
+                }
+
+                mUploadCallback?.onReceiveValue(results)
+                mUploadCallback = null
+                mFileChooserParams = null
+               
+            }
+            //startActivityForResult(intent, FILE_CHOOSER_REQUEST_CODE)
             return true
         } catch (e: ActivityNotFoundException) {
             mUploadCallback?.onReceiveValue(null)
@@ -220,7 +245,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     inner class MyWebViewClient : WebViewClient() {
-        private var debug = true
+        private var debug = false
 
         @Deprecated("Deprecated in Java", ReplaceWith("false"))
         override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
