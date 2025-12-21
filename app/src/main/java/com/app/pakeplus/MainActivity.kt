@@ -162,7 +162,7 @@ class MainActivity : AppCompatActivity() {
         webView.loadUrl("https://juejin.cn/")
     }
 // 1. 在类级别定义 ActivityResultLauncher
-private lateinit var someActivityLauncher: ActivityResultLauncher<Intent>
+// private lateinit var someActivityLauncher: ActivityResultLauncher<Intent>
     private fun startFileChooser(): Boolean {
         val intent = mFileChooserParams?.createIntent()
         if (intent == null) {
@@ -174,31 +174,31 @@ private lateinit var someActivityLauncher: ActivityResultLauncher<Intent>
         }
         
         try {
-             someActivityLauncher = registerForActivityResult(
-                ActivityResultContracts.StartActivityForResult()
-            ) { result ->
-                if (result.resultCode == RESULT_OK) {
-                     var results: Array<Uri>? = null
-                    val data: Intent? = result.data
-                     if (data.data != null) {
-                        results = arrayOf(data.data!!)
-                    } else if (data.clipData != null) {
-                        val clipData = data.clipData!!
-                        val uris = ArrayList<Uri>(clipData.itemCount)
-                        for (i in 0 until clipData.itemCount) {
-                            val item = clipData.getItemAt(i)
-                            item.uri?.let { uris.add(it) }
-                        }
-                        results = uris.toTypedArray()
-                    }
-                }
+            //  someActivityLauncher = registerForActivityResult(
+            //     ActivityResultContracts.StartActivityForResult()
+            // ) { result ->
+            //     if (result.resultCode == RESULT_OK) {
+            //          var results: Array<Uri>? = null
+            //         val data: Intent? = result.data
+            //          if (data.data != null) {
+            //             results = arrayOf(data.data!!)
+            //         } else if (data.clipData != null) {
+            //             val clipData = data.clipData!!
+            //             val uris = ArrayList<Uri>(clipData.itemCount)
+            //             for (i in 0 until clipData.itemCount) {
+            //                 val item = clipData.getItemAt(i)
+            //                 item.uri?.let { uris.add(it) }
+            //             }
+            //             results = uris.toTypedArray()
+            //         }
+            //     }
 
-                mUploadCallback?.onReceiveValue(results)
-                mUploadCallback = null
-                mFileChooserParams = null
+            //     mUploadCallback?.onReceiveValue(results)
+            //     mUploadCallback = null
+            //     mFileChooserParams = null
                
-            }
-            //startActivityForResult(intent, FILE_CHOOSER_REQUEST_CODE)
+            // }
+            startActivityForResult(intent, FILE_CHOOSER_REQUEST_CODE)
             return true
         } catch (e: ActivityNotFoundException) {
             mUploadCallback?.onReceiveValue(null)

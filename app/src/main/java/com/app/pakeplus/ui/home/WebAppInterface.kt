@@ -121,6 +121,7 @@ class WebAppInterface(private val activity: Activity, private val webView: WebVi
     @JavascriptInterface
     fun setStatusBarLightIcon(isLight: Boolean) {
         activity.runOnUiThread {
+            val window = activity.window
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 val controller = window.decorView.windowInsetsController
                 if (isLight) {
