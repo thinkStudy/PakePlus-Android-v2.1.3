@@ -41,15 +41,24 @@ class MainActivity : AppCompatActivity() {
     private companion object {
         private const val PERMISSION_REQUEST_CODE = 1001
         private val REQUIRED_PERMISSIONS = arrayOf(
-            Manifest.permission.READ_EXTERNAL_STORAGE,
+            //Manifest.permission.READ_EXTERNAL_STORAGE,
             // 如果目标是API 33+，可以使用：
              Manifest.permission.READ_MEDIA_IMAGES
         )
+        // 1. 根据版本决定要申请的权限字符串
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // Android 13+：使用新的媒体权限（需要 compileSdkVersion >= 33）
+            REQUIRED_PERMISSIONS = arrayOf(
+                //Manifest.permission.READ_EXTERNAL_STORAGE,
+                // 如果目标是API 33+，可以使用：
+                Manifest.permission.READ_MEDIA_IMAGES
+            )
+        } 
     }
 
     private fun checkAndRequestPermissions(): Boolean {
         val permissionsToRequest = REQUIRED_PERMISSIONS.filter { permission ->
-            ContextCompat.checkSelfPermission(this, permission) != Manifest.permission.READ_MEDIA_IMAGES
+            ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED
         }
 
         return if (permissionsToRequest.isNotEmpty()) {
@@ -71,7 +80,7 @@ class MainActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_REQUEST_CODE) {
-            val allGranted = grantResults.all { it == Manifest.permission.READ_MEDIA_IMAGES }
+            val allGranted = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
             if (allGranted) {
                 // 权限已授予，可以处理文件选择
                 if (mUploadCallback != null && mFileChooserParams != null) {
