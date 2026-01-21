@@ -43,13 +43,13 @@ class MainActivity : AppCompatActivity() {
         private val REQUIRED_PERMISSIONS = arrayOf(
             Manifest.permission.READ_EXTERNAL_STORAGE,
             // 如果目标是API 33+，可以使用：
-            // Manifest.permission.READ_MEDIA_IMAGES
+             Manifest.permission.READ_MEDIA_IMAGES
         )
     }
 
     private fun checkAndRequestPermissions(): Boolean {
         val permissionsToRequest = REQUIRED_PERMISSIONS.filter { permission ->
-            ContextCompat.checkSelfPermission(this, permission) != PackageManager.READ_MEDIA_IMAGES
+            ContextCompat.checkSelfPermission(this, permission) != Manifest.permission.READ_MEDIA_IMAGES
         }
 
         return if (permissionsToRequest.isNotEmpty()) {
@@ -71,7 +71,7 @@ class MainActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_REQUEST_CODE) {
-            val allGranted = grantResults.all { it == PackageManager.READ_MEDIA_IMAGES }
+            val allGranted = grantResults.all { it == Manifest.permission.READ_MEDIA_IMAGES }
             if (allGranted) {
                 // 权限已授予，可以处理文件选择
                 if (mUploadCallback != null && mFileChooserParams != null) {
