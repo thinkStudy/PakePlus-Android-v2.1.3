@@ -37,7 +37,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var gestureDetector: GestureDetectorCompat
     private var mUploadCallback: ValueCallback<Array<Uri>>? = null
     private var mFileChooserParams: WebChromeClient.FileChooserParams? = null
-    private val FILE_CHOOSER_REQUEST_CODE = 1002
+    private val FILE_CHOOSER_REQUEST_CODE = 1000
 
     private companion object {
         private const val PERMISSION_REQUEST_CODE = 1001
@@ -166,12 +166,23 @@ class MainActivity : AppCompatActivity() {
             false
         }
 
-        webView.loadUrl("https://juejin.cn/")
+        webView.loadUrl("https://weby.qyjqk.cn/h5/#/。")
     }
 // 1. 在类级别定义 ActivityResultLauncher
 // private lateinit var someActivityLauncher: ActivityResultLauncher<Intent>
     private fun startFileChooser(): Boolean {
-        val intent = mFileChooserParams?.createIntent()
+        //val intent = mFileChooserParams?.createIntent()
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*" // 选择所有类型文件，也可指定 "image/*", "application/pdf" 等
+            // 可选：选择多个文件
+            // putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+        }
+        // 使用 Intent.ACTION_GET_CONTENT 也是常见的，兼容性可能更好
+        // val intent = Intent(Intent.ACTION_GET_CONTENT)
+        // intent.type = "*/*"
+
+        
         if (intent == null) {
             mUploadCallback?.onReceiveValue(null)
             mUploadCallback = null
@@ -304,10 +315,10 @@ class MainActivity : AppCompatActivity() {
             mUploadCallback = filePathCallback
             mFileChooserParams = fileChooserParams
 
-            if (!checkAndRequestPermissions()) {
-                Toast.makeText(this@MainActivity, "请先授予文件访问权限", Toast.LENGTH_SHORT).show()
-                return true
-            }
+            // if (!checkAndRequestPermissions()) {
+            //     Toast.makeText(this@MainActivity, "请先授予文件访问权限", Toast.LENGTH_SHORT).show()
+            //     return true
+            // }
 
             return startFileChooser()
         }
