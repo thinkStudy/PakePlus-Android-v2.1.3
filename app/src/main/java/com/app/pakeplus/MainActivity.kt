@@ -6,6 +6,7 @@ import android.content.ActivityNotFoundException
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.os.Build
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.webkit.WebChromeClient
@@ -43,17 +44,14 @@ class MainActivity : AppCompatActivity() {
         private val REQUIRED_PERMISSIONS = arrayOf(
             //Manifest.permission.READ_EXTERNAL_STORAGE,
             // 如果目标是API 33+，可以使用：
-             Manifest.permission.READ_MEDIA_IMAGES
-        )
-        // 1. 根据版本决定要申请的权限字符串
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // Android 13+：使用新的媒体权限（需要 compileSdkVersion >= 33）
-            REQUIRED_PERMISSIONS = arrayOf(
-                //Manifest.permission.READ_EXTERNAL_STORAGE,
-                // 如果目标是API 33+，可以使用：
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 Manifest.permission.READ_MEDIA_IMAGES
-            )
-        } 
+            } else {
+                Manifest.permission.READ_MEDIA_IMAGES
+                //Manifest.permission.READ_EXTERNAL_STORAGE
+            }
+        )
+       
     }
 
     private fun checkAndRequestPermissions(): Boolean {
