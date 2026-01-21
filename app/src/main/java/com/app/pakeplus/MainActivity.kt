@@ -49,7 +49,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkAndRequestPermissions(): Boolean {
         val permissionsToRequest = REQUIRED_PERMISSIONS.filter { permission ->
-            ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(this, permission) != PackageManager.READ_MEDIA_IMAGES
         }
 
         return if (permissionsToRequest.isNotEmpty()) {
@@ -71,7 +71,7 @@ class MainActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_REQUEST_CODE) {
-            val allGranted = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+            val allGranted = grantResults.all { it == PackageManager.READ_MEDIA_IMAGES }
             if (allGranted) {
                 // 权限已授予，可以处理文件选择
                 if (mUploadCallback != null && mFileChooserParams != null) {
