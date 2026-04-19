@@ -3,12 +3,10 @@ package com.app.pakeplus
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.graphics.Bitmap
-import android.net.Uri
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.GestureDetector
 import android.view.Gravity
-import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import android.webkit.WebChromeClient
@@ -204,8 +202,8 @@ class MainActivity : AppCompatActivity() {
             popup.menu.add(0, index, index, item.label)
         }
 
-        popup.setOnMenuItemClickListener { menuItem: MenuItem ->
-            val idx = menuItem.itemId
+        popup.setOnMenuItemClickListener { androidMenuItem: android.view.MenuItem ->
+            val idx = androidMenuItem.itemId
             if (idx >= 0 && idx < config.menuItems.size) {
                 handleMenuClick(config.menuItems[idx])
             }
